@@ -1,0 +1,11 @@
+# Agent Manager MCP Server Configuration
+
+# Repository settings
+repoRoot: "/path/to/your/repository"
+baseBranch: "main"
+
+# Test command to run in agent worktrees
+testCommand: "go test ./..."
+
+# Worktree settings
+worktreeDir: ".worktrees"
