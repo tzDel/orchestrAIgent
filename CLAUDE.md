@@ -37,7 +37,13 @@ internal/
 ├── application/          # Use cases and orchestration
 │   └── create_worktree.go  # CreateWorktreeUseCase implementation
 │
-└── infrastructure/       # External concerns and adapters
+├── adapters/             # Inbound adapters (external protocols → application)
+│   └── mcp/
+│       ├── server.go         # MCP server adapter
+│       ├── result.go         # MCP result helpers
+│       └── server_test.go    # MCP server tests
+│
+└── infrastructure/       # Outbound adapters (application → external services)
     ├── git/
     │   └── git_client.go      # GitClient implementing GitOperations
     └── persistence/
@@ -51,8 +57,9 @@ cmd/
 **Layer Dependencies** (strictly enforced):
 - Domain: No dependencies (pure business logic)
 - Application: Depends only on domain interfaces
-- Infrastructure: Implements domain interfaces, depends on external libraries
-- Flow: Infrastructure → Application → Domain
+- Adapters: Translate external protocols to application use cases (inbound)
+- Infrastructure: Implements domain interfaces, depends on external libraries (outbound)
+- Flow: Adapters/Infrastructure → Application → Domain
 
 ## Key Design Decisions
 

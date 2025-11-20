@@ -5,7 +5,7 @@
 *.so
 *.dylib
 agent-manager-mcp
-server
+/server
 
 # Test binary
 *.test

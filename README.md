@@ -6,6 +6,51 @@ An MCP (Model Context Protocol) server that manages isolated git worktrees for A
 
 This server allows AI agents (Copilot, Claude, GPT, Gemini, etc.) to work in isolated git worktrees, preventing conflicts and enabling safe parallel development.
 
+## Quick Start
+
+### Install Dependencies
+
+```bash
+make deps
+```
+
+### Run Tests
+
+```bash
+make test
+```
+
+### Build and Run
+
+```bash
+make build
+make run
+```
+
+### View All Commands
+
+```bash
+make help
+```
+
+## Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `make deps` | Download and tidy dependencies |
+| `make test` | Run all tests |
+| `make test-all` | Run comprehensive test suite (deps + layer tests + coverage) |
+| `make test-layers` | Run tests layer by layer (domain, application, infrastructure) |
+| `make test-script` | Run PowerShell test script (Windows) |
+| `make test-mcp` | Run MCP server tests only |
+| `make test-cover` | Run tests with coverage report |
+| `make test-race` | Run tests with race detector |
+| `make test-bench` | Run benchmark tests |
+| `make build` | Build the server binary |
+| `make run` | Run the server in development mode |
+| `make inspector` | Run server with MCP Inspector |
+| `make clean` | Clean build artifacts |
+
 ## Architecture
 
 See [docs/architecture.md](docs/architecture.md) for detailed architecture documentation.
@@ -18,34 +63,25 @@ See [docs/architecture.md](docs/architecture.md) for detailed architecture docum
 - **Merge to Main**: Merge agent changes back to base branch
 - **Cleanup Worktree**: Remove agent worktree and branch
 
-## Configuration
+## Configure with MCP Clients
 
-Copy `config/config.example.yaml` to `config.yaml` and configure:
+### For Copilot CLI
 
-```yaml
-repoRoot: "/path/to/your/repository"
-baseBranch: "main"
-testCommand: "go test ./..."
-worktreeDir: ".worktrees"
-```
+1. Build the server:
+   ```bash
+   make build
+   ```
 
-## Building
+2. Configure in your Copilot settings
 
-```bash
-make build
-```
+### For Claude Code
 
-## Running
+1. Build the server:
+   ```bash
+   make build
+   ```
 
-```bash
-make run
-```
-
-## Testing
-
-```bash
-make test
-```
+2. Add to MCP settings with the binary path and `-repo` argument pointing to your repository
 
 ## Project Status
 
