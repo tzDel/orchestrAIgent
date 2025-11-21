@@ -1,4 +1,4 @@
-module github.com/tzDel/agent-manager-mcp
+module github.com/tzDel/orchestrAIgent
 
 go 1.23.0
 

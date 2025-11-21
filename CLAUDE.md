@@ -1,4 +1,4 @@
-# Agent Manager MCP - AI Agent Instructions
+# orchestrAIgent - AI Agent Instructions
 
 **Service:** MCP Server (Model Context Protocol) <br>
 **Capabilities:** Git worktree isolation, agent lifecycle management, test execution, conflict-free merging <br>
@@ -36,7 +36,7 @@ This is an MCP (Model Context Protocol) server that manages isolated git worktre
 **Your workspace is the active working directory. Do not leave it.**
 
 - Inspect `<env>` to determine your working directory and the current branch
-- If you are in a worktree (branch: `agent-manager-mcp/*`): edit all files here
+- If you are in a worktree (branch: `orchestrAIgent/*`): edit all files here
 - If you are in the main repository (branch: `main`): make changes here directly
 - Do NOT infer or rely on parent paths from the directory structure
 - Do NOT switch directories with `cd` to other locations unless explicitly required
@@ -254,7 +254,7 @@ go test -v ./...
 go test -cover ./...
 
 # Build the server
-go build -o bin/agent-manager-mcp ./cmd/server
+go build -o bin/orchestrAIgent ./cmd/server
 ```
 
 more commands can be found in [Makefile](Makefile)

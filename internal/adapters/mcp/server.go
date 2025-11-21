@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/tzDel/agent-manager-mcp/internal/application"
+	"github.com/tzDel/orchestrAIgent/internal/application"
 )
 
 type CreateWorktreeArgs struct {
@@ -26,7 +26,7 @@ type MCPServer struct {
 
 func NewMCPServer(createWorktreeUseCase *application.CreateWorktreeUseCase) (*MCPServer, error) {
 	impl := &mcpsdk.Implementation{
-		Name:    "agent-manager-mcp",
+		Name:    "orchestrAIgent",
 		Version: "0.1.0",
 	}
 

@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tzDel/agent-manager-mcp/internal/application"
-	"github.com/tzDel/agent-manager-mcp/internal/domain"
-	"github.com/tzDel/agent-manager-mcp/internal/infrastructure/git"
-	"github.com/tzDel/agent-manager-mcp/internal/infrastructure/persistence"
+	"github.com/tzDel/orchestrAIgent/internal/application"
+	"github.com/tzDel/orchestrAIgent/internal/domain"
+	"github.com/tzDel/orchestrAIgent/internal/infrastructure/git"
+	"github.com/tzDel/orchestrAIgent/internal/infrastructure/persistence"
 )
 
 func initializeGitRepo(repositoryPath string) error {

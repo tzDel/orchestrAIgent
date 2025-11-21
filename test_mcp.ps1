@@ -72,7 +72,7 @@ Write-Host "     ALL TESTS PASSED!             " -ForegroundColor Green
 Write-Host "====================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
-Write-Host '  1. Build server: go build -o agent-manager-mcp.exe cmd/server/main.go' -ForegroundColor White
+Write-Host '  1. Build server: go build -o orchestrAIgent.exe cmd/server/main.go' -ForegroundColor White
 Write-Host '  2. Run server:   go run cmd/server/main.go' -ForegroundColor White
 Write-Host '  3. Test with Inspector: npx @modelcontextprotocol/inspector go run cmd/server/main.go' -ForegroundColor White
 Write-Host ""

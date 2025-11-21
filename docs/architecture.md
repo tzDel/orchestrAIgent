@@ -1,6 +1,6 @@
 # Architecture
 
-This document visualizes the architecture and workflows for the Agent Manager MCP server.
+This document visualizes the architecture and workflows for the orchestrAIgent server.
 
 ## System Architecture
 
@@ -113,7 +113,7 @@ sequenceDiagram
     participant Git as Git Repository
 
     Note over Dev,Script: Developer wants to spawn agent via CLI
-    Dev->>Script: agent-manager spawn copilot "Add user auth"
+    Dev->>Script: orchestraigent spawn copilot "Add user auth"
 
     Script->>MCP: spawn_agent({<br/>type: "copilot",<br/>task: "Add user auth",<br/>agentId: "copilot-auth"<br/>})
 
@@ -134,7 +134,7 @@ sequenceDiagram
     Agent->>Git: Run tests
 
     Note over Dev: Developer polls status
-    Dev->>Script: agent-manager status copilot-auth
+    Dev->>Script: orchestraigent status copilot-auth
     Script->>MCP: get_agent_status("copilot-auth")
     MCP-->>Script: {status: "testing", filesChanged: 5}
     Script-->>Dev: "Status: testing (5 files changed)"
@@ -142,7 +142,7 @@ sequenceDiagram
     Agent->>MCP: Task complete notification
     MCP->>MCP: Update agent status
 
-    Dev->>Script: agent-manager status copilot-auth
+    Dev->>Script: orchestraigent status copilot-auth
     Script->>MCP: get_agent_status("copilot-auth")
     MCP-->>Script: {status: "ready_for_review", summary: "..."}
     Script-->>Dev: "Status: Ready for review"
@@ -157,7 +157,7 @@ sequenceDiagram
     Dev->>Git: git merge agent-copilot-auth
 
     Note over Dev: Developer cleans up
-    Dev->>Script: agent-manager cleanup copilot-auth
+    Dev->>Script: orchestraigent cleanup copilot-auth
     Script->>MCP: cleanup_agent("copilot-auth")
     MCP->>Agent: Terminate process (kill PID 1234)
     MCP->>Git: git worktree remove agent-copilot-auth
@@ -325,7 +325,7 @@ The implementation follows Clean Architecture principles with strict dependency 
 ### Directory Structure
 
 ```
-agent-manager-mcp/
+orchestrAIgent/
 ├── cmd/
 │   ├── server/
 │   │   └── main.go                    # MCP server entrypoint

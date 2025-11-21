@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/tzDel/agent-manager-mcp/internal/domain"
+	"github.com/tzDel/orchestrAIgent/internal/domain"
 )
 
 type InMemoryAgentRepository struct {

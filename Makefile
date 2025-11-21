@@ -19,10 +19,10 @@ deps:
 	go mod tidy
 
 build:
-	go build -o bin/agent-manager-mcp ./cmd/server
+	go build -o bin/orchestrAIgent ./cmd/server
 
 build-exe:
-	go build -o bin/agent-manager-mcp.exe ./cmd/server
+	go build -o bin/orchestrAIgent.exe ./cmd/server
 
 test:
 	go test -v ./...

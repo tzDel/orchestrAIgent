@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tzDel/agent-manager-mcp/internal/domain"
+	"github.com/tzDel/orchestrAIgent/internal/domain"
 )
 
 type mockGitOperations struct {

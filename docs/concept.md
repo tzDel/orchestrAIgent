@@ -34,17 +34,17 @@ Or the developer can ask Copilot to call `merge_to_main("copilot-auth")` after r
 The long-term goal is to enable the MCP server to **spawn and manage AI agent processes** directly, orchestrating their work in isolated worktrees with full lifecycle control.
 
 #### Workflow with CLI Tool
-1. **Developer runs**: `agent-manager spawn copilot "Add user authentication to the API"`
+1. **Developer runs**: `orchestraigent spawn copilot "Add user authentication to the API"`
 2. **MCP server**:
    - Creates dedicated worktree `.worktrees/agent-copilot-auth`
    - Spawns Copilot process configured for that worktree
    - Returns agent ID and PID
-3. **Developer polls**: `agent-manager status copilot-auth` → sees "testing (5 files changed)"
+3. **Developer polls**: `orchestraigent status copilot-auth` → sees "testing (5 files changed)"
 4. **Agent works**: Autonomously makes changes, commits, runs tests in isolation
-5. **Developer checks**: `agent-manager status copilot-auth` → sees "ready_for_review"
+5. **Developer checks**: `orchestraigent status copilot-auth` → sees "ready_for_review"
 6. **Developer reviews**: `cd .worktrees/agent-copilot-auth && git diff && git log`
 7. **Developer merges**: `git checkout main && git merge agent-copilot-auth`
-8. **Developer cleans up**: `agent-manager cleanup copilot-auth` → terminates process, removes worktree
+8. **Developer cleans up**: `orchestraigent cleanup copilot-auth` → terminates process, removes worktree
 
 The CLI tool acts as an **MCP client**, wrapping MCP protocol calls in user-friendly commands for agent orchestration.
 
@@ -74,7 +74,6 @@ The IDE plugin acts as an **orchestration layer**, providing rich UI on top of t
 - Single-repo support (configured main repo and base branch)
 - Create an isolated git worktree and branch per agent
 - Track minimal agent state (worktree path, branch, basic status)
-- Run a configurable test command in an agent's worktree
 - Automatic worktree cleanup (remove worktree/branch when agent work is discarded)
 - Richer git info (diffs, commits, changed files) for manual review
 
@@ -94,14 +93,13 @@ The IDE plugin acts as an **orchestration layer**, providing rich UI on top of t
 - Agent metadata tracking (task description, status, progress)
 
 #### Phase 2: Enhanced Features
-- **CLI Tool** (`agent-manager` command) for orchestration and debugging
-  - `agent-manager spawn <type> <task>` - Spawn agent process with task description
-  - `agent-manager status <agentId>` - Check agent status and progress
-  - `agent-manager list` - List all active agents
-  - `agent-manager logs <agentId>` - View agent process logs
-  - `agent-manager cleanup <agentId>` - Terminate agent and remove worktree
-  - `agent-manager kill <agentId>` - Force-kill stuck agent process
-- Advanced testing (profiles, structured results, auto-tests)
+- **CLI Tool** (`orchestraigent` command) for orchestration and debugging
+  - `orchestraigent spawn <type> <task>` - Spawn agent process with task description
+  - `orchestraigent status <agentId>` - Check agent status and progress
+  - `orchestraigent list` - List all active agents
+  - `orchestraigent logs <agentId>` - View agent process logs
+  - `orchestraigent cleanup <agentId>` - Terminate agent and remove worktree
+  - `orchestraigent kill <agentId>` - Force-kill stuck agent process
 - Better review/merge experience (summaries, conflict info, merge policies)
 - Persistence (DB/files), logging, metrics
 - Multi-repo support with repository selector
@@ -173,14 +171,14 @@ The IDE plugin acts as an **orchestration layer**, providing rich UI on top of t
 - Persistence (for stretch goals):
   - SQLite driver (e.g., `modernc.org/sqlite` or `github.com/mattn/go-sqlite3`)
   - Or simple JSON/YAML file storage using stdlib
-- **CLI wrapper** (Phase 2 - `agent-manager` command):
+- **CLI wrapper** (Phase 2 - `orchestraigent` command):
   - `github.com/spf13/cobra` for structured commands:
-    - `agent-manager spawn <type> <task>` - Spawn agent with task
-    - `agent-manager status <agentId>` - Check agent status
-    - `agent-manager list` - List active agents
-    - `agent-manager logs <agentId>` - View agent logs
-    - `agent-manager cleanup <agentId>` - Cleanup agent
-    - `agent-manager kill <agentId>` - Force-kill agent
+    - `orchestraigent spawn <type> <task>` - Spawn agent with task
+    - `orchestraigent status <agentId>` - Check agent status
+    - `orchestraigent list` - List active agents
+    - `orchestraigent logs <agentId>` - View agent logs
+    - `orchestraigent cleanup <agentId>` - Cleanup agent
+    - `orchestraigent kill <agentId>` - Force-kill agent
   - CLI acts as MCP client, wrapping MCP protocol calls in user-friendly commands
 - Optional REST/debug interface (if desired later):
   - Based on `net/http` from stdlib

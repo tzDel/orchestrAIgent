@@ -1,4 +1,4 @@
-# Agent Manager MCP Server
+# orchestrAIgent
 
 An MCP (Model Context Protocol) server that manages isolated git worktrees for AI coding agents.
 
@@ -70,7 +70,7 @@ See [docs/architecture.md](docs/architecture.md) for detailed architecture docum
 
 1. Build the server:
    ```bash
-   make build
+   make build-exe
    ```
 
 2. Configure in your Copilot settings
@@ -79,10 +79,13 @@ See [docs/architecture.md](docs/architecture.md) for detailed architecture docum
 
 1. Build the server:
    ```bash
-   make build
+   make build-exe
    ```
 
-2. Add to MCP settings with the binary path and `-repo` argument pointing to your repository
+2. Add mcp 
+```shell
+claude mcp add --scope project --transport stdio orchestrAIgent -- .\bin\orchestrAIgent.exe
+```
 
 ## Project Status
 

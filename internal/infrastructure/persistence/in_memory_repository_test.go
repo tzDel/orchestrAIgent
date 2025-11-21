@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/tzDel/agent-manager-mcp/internal/domain"
+	"github.com/tzDel/orchestrAIgent/internal/domain"
 )
 
 func TestInMemoryRepository_SaveAndFind(t *testing.T) {
