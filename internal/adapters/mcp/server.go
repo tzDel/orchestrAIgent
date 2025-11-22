@@ -19,12 +19,30 @@ type CreateWorktreeOutput struct {
 	Status       string `json:"status"`
 }
 
+type RemoveWorktreeArgs struct {
+	AgentID string `json:"agentId" jsonschema:"required" jsonschema_description:"Agent identifier"`
+	Force   bool   `json:"force" jsonschema_description:"Skip safety checks and force removal"`
+}
+
+type RemoveWorktreeOutput struct {
+	AgentID            string `json:"agentId"`
+	RemovedAt          string `json:"removedAt,omitempty"`
+	HasUnmergedChanges bool   `json:"hasUnmergedChanges"`
+	UnmergedCommits    int    `json:"unmergedCommits"`
+	UncommittedFiles   int    `json:"uncommittedFiles"`
+	Warning            string `json:"warning,omitempty"`
+}
+
 type MCPServer struct {
 	mcpServer             *mcpsdk.Server
 	createWorktreeUseCase *application.CreateWorktreeUseCase
+	removeWorktreeUseCase *application.RemoveWorktreeUseCase
 }
 
-func NewMCPServer(createWorktreeUseCase *application.CreateWorktreeUseCase) (*MCPServer, error) {
+func NewMCPServer(
+	createWorktreeUseCase *application.CreateWorktreeUseCase,
+	removeWorktreeUseCase *application.RemoveWorktreeUseCase,
+) (*MCPServer, error) {
 	impl := &mcpsdk.Implementation{
 		Name:    "orchestrAIgent",
 		Version: "0.1.0",
@@ -35,6 +53,7 @@ func NewMCPServer(createWorktreeUseCase *application.CreateWorktreeUseCase) (*MC
 	server := &MCPServer{
 		mcpServer:             mcpServer,
 		createWorktreeUseCase: createWorktreeUseCase,
+		removeWorktreeUseCase: removeWorktreeUseCase,
 	}
 
 	mcpsdk.AddTool(
@@ -46,6 +65,15 @@ func NewMCPServer(createWorktreeUseCase *application.CreateWorktreeUseCase) (*MC
 		server.handleCreateWorktree,
 	)
 
+	mcpsdk.AddTool(
+		mcpServer,
+		&mcpsdk.Tool{
+			Name:        "remove_worktree",
+			Description: "Removes an agent's worktree and branch. Checks for unmerged changes unless force=true.",
+		},
+		server.handleRemoveWorktree,
+	)
+
 	return server, nil
 }
 
@@ -54,8 +82,6 @@ func (s *MCPServer) handleCreateWorktree(
 	req *mcpsdk.CallToolRequest,
 	args CreateWorktreeArgs,
 ) (*mcpsdk.CallToolResult, any, error) {
-	// req is required by MCP SDK tool handler signature but unused here
-	// All necessary input comes from args; req would be used for request metadata (tracing, audit logs, etc.)
 	request := application.CreateWorktreeRequest{
 		AgentID: args.AgentID,
 	}
@@ -74,6 +100,52 @@ func (s *MCPServer) handleCreateWorktree(
 	}
 
 	message := fmt.Sprintf("Successfully created worktree for agent '%s' at '%s' on branch '%s'", response.AgentID, response.WorktreePath, response.BranchName)
+	return newSuccessResult(message), output, nil
+}
+
+func (s *MCPServer) handleRemoveWorktree(
+	ctx context.Context,
+	req *mcpsdk.CallToolRequest,
+	args RemoveWorktreeArgs,
+) (*mcpsdk.CallToolResult, any, error) {
+	request := application.RemoveWorktreeRequest{
+		AgentID: args.AgentID,
+		Force:   args.Force,
+	}
+
+	response, err := s.removeWorktreeUseCase.Execute(ctx, request)
+	if err != nil {
+		message := fmt.Sprintf("Failed to remove worktree: %v", err)
+		return newErrorResult(message), nil, err
+	}
+
+	output := RemoveWorktreeOutput{
+		AgentID:            response.AgentID,
+		HasUnmergedChanges: response.HasUnmergedChanges,
+		UnmergedCommits:    response.UnmergedCommits,
+		UncommittedFiles:   response.UncommittedFiles,
+		Warning:            response.Warning,
+	}
+
+	if !response.RemovedAt.IsZero() {
+		output.RemovedAt = response.RemovedAt.Format("2006-01-02T15:04:05Z07:00")
+	}
+
+	if response.HasUnmergedChanges {
+		message := fmt.Sprintf(
+			"WARNING: Agent '%s' has unmerged changes\n\nUncommitted files: %d\nUnpushed commits: %d\n\n%s",
+			response.AgentID,
+			response.UncommittedFiles,
+			response.UnmergedCommits,
+			response.Warning,
+		)
+		return &mcpsdk.CallToolResult{
+			Content: []mcpsdk.Content{newTextContent(message)},
+			IsError: false,
+		}, output, nil
+	}
+
+	message := fmt.Sprintf("Successfully removed worktree for agent '%s'", response.AgentID)
 	return newSuccessResult(message), output, nil
 }
 

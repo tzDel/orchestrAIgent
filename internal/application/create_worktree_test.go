@@ -9,57 +9,6 @@ import (
 	"github.com/tzDel/orchestrAIgent/internal/domain"
 )
 
-type mockGitOperations struct {
-	createWorktreeFunc func(ctx context.Context, path string, branch string) error
-	branchExistsFunc   func(ctx context.Context, branch string) (bool, error)
-}
-
-func (mock *mockGitOperations) CreateWorktree(ctx context.Context, path string, branch string) error {
-	if mock.createWorktreeFunc != nil {
-		return mock.createWorktreeFunc(ctx, path, branch)
-	}
-	return nil
-}
-
-func (mock *mockGitOperations) RemoveWorktree(ctx context.Context, path string) error {
-	return nil
-}
-
-func (mock *mockGitOperations) BranchExists(ctx context.Context, branch string) (bool, error) {
-	if mock.branchExistsFunc != nil {
-		return mock.branchExistsFunc(ctx, branch)
-	}
-	return false, nil
-}
-
-type mockAgentRepository struct {
-	agents map[string]*domain.Agent
-}
-
-func newMockAgentRepository() *mockAgentRepository {
-	return &mockAgentRepository{
-		agents: make(map[string]*domain.Agent),
-	}
-}
-
-func (mock *mockAgentRepository) Save(ctx context.Context, agent *domain.Agent) error {
-	mock.agents[agent.ID().String()] = agent
-	return nil
-}
-
-func (mock *mockAgentRepository) FindByID(ctx context.Context, agentID domain.AgentID) (*domain.Agent, error) {
-	agent, exists := mock.agents[agentID.String()]
-	if !exists {
-		return nil, errors.New("not found")
-	}
-	return agent, nil
-}
-
-func (mock *mockAgentRepository) Exists(ctx context.Context, agentID domain.AgentID) (bool, error) {
-	_, exists := mock.agents[agentID.String()]
-	return exists, nil
-}
-
 func TestCreateWorktreeUseCase_Execute_Success(t *testing.T) {
 	// arrange
 	gitOperations := &mockGitOperations{}

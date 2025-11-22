@@ -80,10 +80,11 @@ func TestNewMCPServer_CreatesServerWithToolsRegistered(t *testing.T) {
 
 	gitClient := git.NewGitClient(repositoryRoot)
 	agentRepository := persistence.NewInMemoryAgentRepository()
-	useCase := application.NewCreateWorktreeUseCase(gitClient, agentRepository, repositoryRoot)
+	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, agentRepository, repositoryRoot)
+	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, agentRepository, "master")
 
 	// act
-	server, err := NewMCPServer(useCase)
+	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
 
 	// assert
 	if err != nil {
@@ -104,9 +105,10 @@ func TestCreateWorktreeToolHandler_ValidInput_ReturnsSuccess(t *testing.T) {
 
 	gitClient := git.NewGitClient(repositoryRoot)
 	agentRepository := persistence.NewInMemoryAgentRepository()
-	useCase := application.NewCreateWorktreeUseCase(gitClient, agentRepository, repositoryRoot)
+	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, agentRepository, repositoryRoot)
+	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, agentRepository, "master")
 
-	server, err := NewMCPServer(useCase)
+	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
 	if err != nil {
 		t.Fatalf("failed to create MCP server: %v", err)
 	}
@@ -155,9 +157,10 @@ func TestCreateWorktreeToolHandler_InvalidAgentID_ReturnsError(t *testing.T) {
 
 	gitClient := git.NewGitClient(repositoryRoot)
 	agentRepository := persistence.NewInMemoryAgentRepository()
-	useCase := application.NewCreateWorktreeUseCase(gitClient, agentRepository, repositoryRoot)
+	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, agentRepository, repositoryRoot)
+	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, agentRepository, "master")
 
-	server, err := NewMCPServer(useCase)
+	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
 	if err != nil {
 		t.Fatalf("failed to create MCP server: %v", err)
 	}
@@ -186,9 +189,10 @@ func TestCreateWorktreeToolHandler_DuplicateAgent_ReturnsError(t *testing.T) {
 
 	gitClient := git.NewGitClient(repositoryRoot)
 	agentRepository := persistence.NewInMemoryAgentRepository()
-	useCase := application.NewCreateWorktreeUseCase(gitClient, agentRepository, repositoryRoot)
+	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, agentRepository, repositoryRoot)
+	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, agentRepository, "master")
 
-	server, err := NewMCPServer(useCase)
+	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
 	if err != nil {
 		t.Fatalf("failed to create MCP server: %v", err)
 	}
@@ -208,6 +212,237 @@ func TestCreateWorktreeToolHandler_DuplicateAgent_ReturnsError(t *testing.T) {
 	// assert
 	if err == nil {
 		t.Fatal("expected error for duplicate agent")
+	}
+	if result != nil && !result.IsError {
+		t.Error("expected IsError to be true")
+	}
+}
+
+func TestRemoveWorktreeToolHandler_CleanWorktree_ReturnsSuccess(t *testing.T) {
+	// arrange
+	repositoryRoot, cleanup := setupTestRepo(t)
+	defer cleanup()
+
+	gitClient := git.NewGitClient(repositoryRoot)
+	agentRepository := persistence.NewInMemoryAgentRepository()
+	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, agentRepository, repositoryRoot)
+	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, agentRepository, "master")
+
+	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	if err != nil {
+		t.Fatalf("failed to create MCP server: %v", err)
+	}
+
+	ctx := context.Background()
+
+	createArgs := CreateWorktreeArgs{AgentID: "test-agent"}
+	_, _, _ = server.handleCreateWorktree(ctx, nil, createArgs)
+
+	removeArgs := RemoveWorktreeArgs{AgentID: "test-agent", Force: false}
+
+	// act
+	result, output, err := server.handleRemoveWorktree(ctx, nil, removeArgs)
+
+	// assert
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected result to be non-nil")
+	}
+	if result.IsError {
+		t.Error("expected IsError to be false")
+	}
+
+	response, ok := output.(RemoveWorktreeOutput)
+	if !ok {
+		t.Fatalf("expected output to be RemoveWorktreeOutput, got: %T", output)
+	}
+	if response.AgentID != "test-agent" {
+		t.Errorf("expected agent ID 'test-agent', got: %s", response.AgentID)
+	}
+	if response.HasUnmergedChanges {
+		t.Error("expected HasUnmergedChanges to be false")
+	}
+	if response.RemovedAt == "" {
+		t.Error("expected RemovedAt to be set")
+	}
+}
+
+func TestRemoveWorktreeToolHandler_WithUncommittedChanges_ReturnsWarning(t *testing.T) {
+	// arrange
+	repositoryRoot, cleanup := setupTestRepo(t)
+	defer cleanup()
+
+	gitClient := git.NewGitClient(repositoryRoot)
+	agentRepository := persistence.NewInMemoryAgentRepository()
+	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, agentRepository, repositoryRoot)
+	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, agentRepository, "master")
+
+	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	if err != nil {
+		t.Fatalf("failed to create MCP server: %v", err)
+	}
+
+	ctx := context.Background()
+
+	createArgs := CreateWorktreeArgs{AgentID: "test-agent"}
+	createResult, _, _ := server.handleCreateWorktree(ctx, nil, createArgs)
+	if createResult.IsError {
+		t.Fatalf("failed to create worktree: %v", createResult.Content)
+	}
+
+	worktreePath := filepath.Join(repositoryRoot, ".worktrees", "agent-test-agent")
+	newFilePath := filepath.Join(worktreePath, "new-file.txt")
+	os.WriteFile(newFilePath, []byte("new content"), 0644)
+
+	removeArgs := RemoveWorktreeArgs{AgentID: "test-agent", Force: false}
+
+	// act
+	result, output, err := server.handleRemoveWorktree(ctx, nil, removeArgs)
+
+	// assert
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected result to be non-nil")
+	}
+	if result.IsError {
+		t.Error("expected IsError to be false even with warning")
+	}
+
+	response, ok := output.(RemoveWorktreeOutput)
+	if !ok {
+		t.Fatalf("expected output to be RemoveWorktreeOutput, got: %T", output)
+	}
+	if !response.HasUnmergedChanges {
+		t.Error("expected HasUnmergedChanges to be true")
+	}
+	if response.UncommittedFiles != 1 {
+		t.Errorf("expected UncommittedFiles = 1, got %d", response.UncommittedFiles)
+	}
+	if response.Warning == "" {
+		t.Error("expected warning message")
+	}
+	if response.RemovedAt != "" {
+		t.Error("expected RemovedAt to be empty (not removed)")
+	}
+}
+
+func TestRemoveWorktreeToolHandler_ForceRemoveWithChanges_ReturnsSuccess(t *testing.T) {
+	// arrange
+	repositoryRoot, cleanup := setupTestRepo(t)
+	defer cleanup()
+
+	gitClient := git.NewGitClient(repositoryRoot)
+	agentRepository := persistence.NewInMemoryAgentRepository()
+	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, agentRepository, repositoryRoot)
+	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, agentRepository, "master")
+
+	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	if err != nil {
+		t.Fatalf("failed to create MCP server: %v", err)
+	}
+
+	ctx := context.Background()
+
+	createArgs := CreateWorktreeArgs{AgentID: "test-agent"}
+	createResult, _, _ := server.handleCreateWorktree(ctx, nil, createArgs)
+	if createResult.IsError {
+		t.Fatalf("failed to create worktree: %v", createResult.Content)
+	}
+
+	worktreePath := filepath.Join(repositoryRoot, ".worktrees", "agent-test-agent")
+	newFilePath := filepath.Join(worktreePath, "new-file.txt")
+	os.WriteFile(newFilePath, []byte("new content"), 0644)
+
+	removeArgs := RemoveWorktreeArgs{AgentID: "test-agent", Force: true}
+
+	// act
+	result, output, err := server.handleRemoveWorktree(ctx, nil, removeArgs)
+
+	// assert
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected result to be non-nil")
+	}
+	if result.IsError {
+		t.Error("expected IsError to be false")
+	}
+
+	response, ok := output.(RemoveWorktreeOutput)
+	if !ok {
+		t.Fatalf("expected output to be RemoveWorktreeOutput, got: %T", output)
+	}
+	if response.HasUnmergedChanges {
+		t.Error("expected HasUnmergedChanges to be false when force=true")
+	}
+	if response.RemovedAt == "" {
+		t.Error("expected RemovedAt to be set")
+	}
+
+	if _, err := os.Stat(worktreePath); !os.IsNotExist(err) {
+		t.Error("expected worktree directory to be removed")
+	}
+}
+
+func TestRemoveWorktreeToolHandler_InvalidAgentID_ReturnsError(t *testing.T) {
+	// arrange
+	repositoryRoot, cleanup := setupTestRepo(t)
+	defer cleanup()
+
+	gitClient := git.NewGitClient(repositoryRoot)
+	agentRepository := persistence.NewInMemoryAgentRepository()
+	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, agentRepository, repositoryRoot)
+	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, agentRepository, "master")
+
+	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	if err != nil {
+		t.Fatalf("failed to create MCP server: %v", err)
+	}
+
+	ctx := context.Background()
+	args := RemoveWorktreeArgs{AgentID: "invalid agent id", Force: false}
+
+	// act
+	result, _, err := server.handleRemoveWorktree(ctx, nil, args)
+
+	// assert
+	if err == nil {
+		t.Fatal("expected error for invalid agent ID")
+	}
+	if result != nil && !result.IsError {
+		t.Error("expected IsError to be true")
+	}
+}
+
+func TestRemoveWorktreeToolHandler_NonexistentAgent_ReturnsError(t *testing.T) {
+	// arrange
+	repositoryRoot, cleanup := setupTestRepo(t)
+	defer cleanup()
+
+	gitClient := git.NewGitClient(repositoryRoot)
+	agentRepository := persistence.NewInMemoryAgentRepository()
+	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, agentRepository, repositoryRoot)
+	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, agentRepository, "master")
+
+	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	if err != nil {
+		t.Fatalf("failed to create MCP server: %v", err)
+	}
+
+	ctx := context.Background()
+	args := RemoveWorktreeArgs{AgentID: "nonexistent", Force: false}
+
+	// act
+	result, _, err := server.handleRemoveWorktree(ctx, nil, args)
+
+	// assert
+	if err == nil {
+		t.Fatal("expected error for non-existent agent")
 	}
 	if result != nil && !result.IsError {
 		t.Error("expected IsError to be true")

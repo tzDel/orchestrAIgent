@@ -11,6 +11,7 @@ const (
 	StatusCreated AgentStatus = "created"
 	StatusMerged  AgentStatus = "merged"
 	StatusFailed  AgentStatus = "failed"
+	StatusRemoved AgentStatus = "removed"
 )
 
 type Agent struct {
@@ -61,5 +62,10 @@ func (agent *Agent) MarkMerged() {
 
 func (agent *Agent) MarkFailed() {
 	agent.status = StatusFailed
+	agent.updatedAt = time.Now()
+}
+
+func (agent *Agent) MarkRemoved() {
+	agent.status = StatusRemoved
 	agent.updatedAt = time.Now()
 }

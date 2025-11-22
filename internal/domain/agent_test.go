@@ -72,3 +72,17 @@ func TestAgent_MarkFailed(t *testing.T) {
 		t.Errorf("Status after MarkFailed() = %q, want %q", agent.Status(), StatusFailed)
 	}
 }
+
+func TestAgent_MarkRemoved(t *testing.T) {
+	// arrange
+	agentID, _ := NewAgentID("test-agent")
+	agent, _ := NewAgent(agentID, "/path")
+
+	// act
+	agent.MarkRemoved()
+
+	// assert
+	if agent.Status() != StatusRemoved {
+		t.Errorf("Status after MarkRemoved() = %q, want %q", agent.Status(), StatusRemoved)
+	}
+}

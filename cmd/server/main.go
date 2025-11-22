@@ -43,8 +43,9 @@ func initializeMCPServer(repositoryPath string) *mcp.MCPServer {
 	gitOperations := git.NewGitClient(repositoryPath)
 	agentRepository := persistence.NewInMemoryAgentRepository()
 	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitOperations, agentRepository, repositoryPath)
+	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitOperations, agentRepository, "main")
 
-	server, err := mcp.NewMCPServer(createWorktreeUseCase)
+	server, err := mcp.NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
 	if err != nil {
 		log.Fatalf("failed to initialize MCP server: %v", err)
 	}

@@ -52,8 +52,13 @@ func (gitClient *GitClient) CreateWorktree(ctx context.Context, worktreePath str
 	return nil
 }
 
-func (gitClient *GitClient) RemoveWorktree(ctx context.Context, worktreePath string) error {
-	_, err := gitClient.executeGitCommand(ctx, "worktree", "remove", worktreePath, "--force")
+func (gitClient *GitClient) RemoveWorktree(ctx context.Context, worktreePath string, force bool) error {
+	args := []string{"worktree", "remove", worktreePath}
+	if force {
+		args = append(args, "--force")
+	}
+
+	_, err := gitClient.executeGitCommand(ctx, args...)
 	if err != nil {
 		return fmt.Errorf("failed to remove worktree: %w", err)
 	}
@@ -68,4 +73,50 @@ func (gitClient *GitClient) BranchExists(ctx context.Context, branchName string)
 	}
 
 	return strings.TrimSpace(string(commandOutput)) != "", nil
+}
+
+func (gitClient *GitClient) HasUncommittedChanges(ctx context.Context, worktreePath string) (bool, int, error) {
+	commandOutput, err := gitClient.executeGitCommandWithOutput(ctx, "-C", worktreePath, "status", "--porcelain")
+	if err != nil {
+		return false, 0, fmt.Errorf("failed to check status: %w", err)
+	}
+
+	outputString := strings.TrimSpace(string(commandOutput))
+	if outputString == "" {
+		return false, 0, nil
+	}
+
+	lines := strings.Split(outputString, "\n")
+	return true, len(lines), nil
+}
+
+func (gitClient *GitClient) HasUnpushedCommits(ctx context.Context, baseBranch string, agentBranch string) (int, error) {
+	revRange := fmt.Sprintf("%s..%s", baseBranch, agentBranch)
+	commandOutput, err := gitClient.executeGitCommandWithOutput(ctx, "rev-list", revRange, "--count")
+	if err != nil {
+		return 0, fmt.Errorf("failed to count commits: %w", err)
+	}
+
+	outputString := strings.TrimSpace(string(commandOutput))
+	count := 0
+	_, parseErr := fmt.Sscanf(outputString, "%d", &count)
+	if parseErr != nil {
+		return 0, fmt.Errorf("failed to parse commit count: %w", parseErr)
+	}
+
+	return count, nil
+}
+
+func (gitClient *GitClient) DeleteBranch(ctx context.Context, branchName string, force bool) error {
+	flag := "-d"
+	if force {
+		flag = "-D"
+	}
+
+	_, err := gitClient.executeGitCommand(ctx, "branch", flag, branchName)
+	if err != nil {
+		return fmt.Errorf("failed to delete branch: %w", err)
+	}
+
+	return nil
 }
