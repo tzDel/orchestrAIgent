@@ -87,6 +87,13 @@ See [docs/architecture.md](docs/architecture.md) for detailed architecture docum
 claude mcp add --scope project --transport stdio orchestrAIgent -- .\bin\orchestrAIgent.exe
 ```
 
+3. verify
+```shell
+ claude mcp list
+```
+
+4. Restart Claude Code
+
 ## Project Status
 
 Currently in development. See [docs/concept.md](docs/concept.md) for vision and roadmap.
