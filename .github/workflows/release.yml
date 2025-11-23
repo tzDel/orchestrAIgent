@@ -71,6 +71,7 @@ jobs:
           git push origin ${{ steps.bump_version.outputs.new_version }}
 
       - name: Run GoReleaser
+        id: goreleaser
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
@@ -78,3 +79,9 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clean up tag on failure
+        if: failure() && steps.bump_version.outputs.new_version
+        run: |
+          git push --delete origin ${{ steps.bump_version.outputs.new_version }} || true
+          echo "Removed tag ${{ steps.bump_version.outputs.new_version }} due to release failure"
