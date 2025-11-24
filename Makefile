@@ -4,8 +4,6 @@ help:
 	@echo "Available targets:"
 	@echo "  make deps          - Download and tidy dependencies"
 	@echo "  make test          - Run all tests"
-	@echo "  make test-script   - Run PowerShell test script (Windows)"
-	@echo "  make test-mcp      - Run MCP server tests only"
 	@echo "  make test-cover    - Run tests with coverage report"
 	@echo "  make test-race     - Run tests with race detector"
 	@echo "  make test-bench    - Run benchmark tests"
@@ -26,12 +24,6 @@ build-exe:
 
 test:
 	go test -v ./...
-
-test-script:
-	powershell -ExecutionPolicy Bypass -File test_mcp.ps1
-
-test-mcp:
-	go test -v ./internal/infrastructure/mcp/...
 
 test-cover:
 	go test -cover ./...
