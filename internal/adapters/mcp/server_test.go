@@ -81,10 +81,10 @@ func TestNewMCPServer_CreatesServerWithToolsRegistered(t *testing.T) {
 	gitClient := git.NewGitClient(repositoryRoot)
 	sessionRepository := persistence.NewInMemorySessionRepository()
 	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, sessionRepository, repositoryRoot)
-	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, sessionRepository, "master")
+	removeSessionUseCase := application.NewRemoveSessionUseCase(gitClient, sessionRepository, "master")
 
 	// act
-	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	server, err := NewMCPServer(createWorktreeUseCase, removeSessionUseCase)
 
 	// assert
 	if err != nil {
@@ -106,9 +106,9 @@ func TestCreateWorktreeToolHandler_ValidInput_ReturnsSuccess(t *testing.T) {
 	gitClient := git.NewGitClient(repositoryRoot)
 	sessionRepository := persistence.NewInMemorySessionRepository()
 	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, sessionRepository, repositoryRoot)
-	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, sessionRepository, "master")
+	removeSessionUseCase := application.NewRemoveSessionUseCase(gitClient, sessionRepository, "master")
 
-	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	server, err := NewMCPServer(createWorktreeUseCase, removeSessionUseCase)
 	if err != nil {
 		t.Fatalf("failed to create MCP server: %v", err)
 	}
@@ -158,9 +158,9 @@ func TestCreateWorktreeToolHandler_InvalidSessionID_ReturnsError(t *testing.T) {
 	gitClient := git.NewGitClient(repositoryRoot)
 	sessionRepository := persistence.NewInMemorySessionRepository()
 	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, sessionRepository, repositoryRoot)
-	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, sessionRepository, "master")
+	removeSessionUseCase := application.NewRemoveSessionUseCase(gitClient, sessionRepository, "master")
 
-	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	server, err := NewMCPServer(createWorktreeUseCase, removeSessionUseCase)
 	if err != nil {
 		t.Fatalf("failed to create MCP server: %v", err)
 	}
@@ -190,9 +190,9 @@ func TestCreateWorktreeToolHandler_DuplicateSession_ReturnsError(t *testing.T) {
 	gitClient := git.NewGitClient(repositoryRoot)
 	sessionRepository := persistence.NewInMemorySessionRepository()
 	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, sessionRepository, repositoryRoot)
-	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, sessionRepository, "master")
+	removeSessionUseCase := application.NewRemoveSessionUseCase(gitClient, sessionRepository, "master")
 
-	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	server, err := NewMCPServer(createWorktreeUseCase, removeSessionUseCase)
 	if err != nil {
 		t.Fatalf("failed to create MCP server: %v", err)
 	}
@@ -218,7 +218,7 @@ func TestCreateWorktreeToolHandler_DuplicateSession_ReturnsError(t *testing.T) {
 	}
 }
 
-func TestRemoveWorktreeToolHandler_CleanWorktree_ReturnsSuccess(t *testing.T) {
+func TestRemoveSessionToolHandler_CleanWorktree_ReturnsSuccess(t *testing.T) {
 	// arrange
 	repositoryRoot, cleanup := setupTestRepo(t)
 	defer cleanup()
@@ -226,9 +226,9 @@ func TestRemoveWorktreeToolHandler_CleanWorktree_ReturnsSuccess(t *testing.T) {
 	gitClient := git.NewGitClient(repositoryRoot)
 	sessionRepository := persistence.NewInMemorySessionRepository()
 	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, sessionRepository, repositoryRoot)
-	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, sessionRepository, "master")
+	removeSessionUseCase := application.NewRemoveSessionUseCase(gitClient, sessionRepository, "master")
 
-	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	server, err := NewMCPServer(createWorktreeUseCase, removeSessionUseCase)
 	if err != nil {
 		t.Fatalf("failed to create MCP server: %v", err)
 	}
@@ -238,10 +238,10 @@ func TestRemoveWorktreeToolHandler_CleanWorktree_ReturnsSuccess(t *testing.T) {
 	createArgs := CreateWorktreeArgs{SessionID: "test-session"}
 	_, _, _ = server.handleCreateWorktree(ctx, nil, createArgs)
 
-	removeArgs := RemoveWorktreeArgs{SessionID: "test-session", Force: false}
+	removeArgs := RemoveSessionArgs{SessionID: "test-session", Force: false}
 
 	// act
-	result, output, err := server.handleRemoveWorktree(ctx, nil, removeArgs)
+	result, output, err := server.handleRemoveSession(ctx, nil, removeArgs)
 
 	// assert
 	if err != nil {
@@ -254,9 +254,9 @@ func TestRemoveWorktreeToolHandler_CleanWorktree_ReturnsSuccess(t *testing.T) {
 		t.Error("expected IsError to be false")
 	}
 
-	response, ok := output.(RemoveWorktreeOutput)
+	response, ok := output.(RemoveSessionOutput)
 	if !ok {
-		t.Fatalf("expected output to be RemoveWorktreeOutput, got: %T", output)
+		t.Fatalf("expected output to be RemoveSessionOutput, got: %T", output)
 	}
 	if response.SessionID != "test-session" {
 		t.Errorf("expected session ID 'test-session', got: %s", response.SessionID)
@@ -269,7 +269,7 @@ func TestRemoveWorktreeToolHandler_CleanWorktree_ReturnsSuccess(t *testing.T) {
 	}
 }
 
-func TestRemoveWorktreeToolHandler_WithUncommittedChanges_ReturnsWarning(t *testing.T) {
+func TestRemoveSessionToolHandler_WithUncommittedChanges_ReturnsWarning(t *testing.T) {
 	// arrange
 	repositoryRoot, cleanup := setupTestRepo(t)
 	defer cleanup()
@@ -277,9 +277,9 @@ func TestRemoveWorktreeToolHandler_WithUncommittedChanges_ReturnsWarning(t *test
 	gitClient := git.NewGitClient(repositoryRoot)
 	sessionRepository := persistence.NewInMemorySessionRepository()
 	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, sessionRepository, repositoryRoot)
-	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, sessionRepository, "master")
+	removeSessionUseCase := application.NewRemoveSessionUseCase(gitClient, sessionRepository, "master")
 
-	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	server, err := NewMCPServer(createWorktreeUseCase, removeSessionUseCase)
 	if err != nil {
 		t.Fatalf("failed to create MCP server: %v", err)
 	}
@@ -296,10 +296,10 @@ func TestRemoveWorktreeToolHandler_WithUncommittedChanges_ReturnsWarning(t *test
 	newFilePath := filepath.Join(worktreePath, "new-file.txt")
 	os.WriteFile(newFilePath, []byte("new content"), 0644)
 
-	removeArgs := RemoveWorktreeArgs{SessionID: "test-session", Force: false}
+	removeArgs := RemoveSessionArgs{SessionID: "test-session", Force: false}
 
 	// act
-	result, output, err := server.handleRemoveWorktree(ctx, nil, removeArgs)
+	result, output, err := server.handleRemoveSession(ctx, nil, removeArgs)
 
 	// assert
 	if err != nil {
@@ -312,9 +312,9 @@ func TestRemoveWorktreeToolHandler_WithUncommittedChanges_ReturnsWarning(t *test
 		t.Error("expected IsError to be false even with warning")
 	}
 
-	response, ok := output.(RemoveWorktreeOutput)
+	response, ok := output.(RemoveSessionOutput)
 	if !ok {
-		t.Fatalf("expected output to be RemoveWorktreeOutput, got: %T", output)
+		t.Fatalf("expected output to be RemoveSessionOutput, got: %T", output)
 	}
 	if !response.HasUnmergedChanges {
 		t.Error("expected HasUnmergedChanges to be true")
@@ -330,7 +330,7 @@ func TestRemoveWorktreeToolHandler_WithUncommittedChanges_ReturnsWarning(t *test
 	}
 }
 
-func TestRemoveWorktreeToolHandler_ForceRemoveWithChanges_ReturnsSuccess(t *testing.T) {
+func TestRemoveSessionToolHandler_ForceRemoveWithChanges_ReturnsSuccess(t *testing.T) {
 	// arrange
 	repositoryRoot, cleanup := setupTestRepo(t)
 	defer cleanup()
@@ -338,9 +338,9 @@ func TestRemoveWorktreeToolHandler_ForceRemoveWithChanges_ReturnsSuccess(t *test
 	gitClient := git.NewGitClient(repositoryRoot)
 	sessionRepository := persistence.NewInMemorySessionRepository()
 	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, sessionRepository, repositoryRoot)
-	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, sessionRepository, "master")
+	removeSessionUseCase := application.NewRemoveSessionUseCase(gitClient, sessionRepository, "master")
 
-	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	server, err := NewMCPServer(createWorktreeUseCase, removeSessionUseCase)
 	if err != nil {
 		t.Fatalf("failed to create MCP server: %v", err)
 	}
@@ -357,10 +357,10 @@ func TestRemoveWorktreeToolHandler_ForceRemoveWithChanges_ReturnsSuccess(t *test
 	newFilePath := filepath.Join(worktreePath, "new-file.txt")
 	os.WriteFile(newFilePath, []byte("new content"), 0644)
 
-	removeArgs := RemoveWorktreeArgs{SessionID: "test-session", Force: true}
+	removeArgs := RemoveSessionArgs{SessionID: "test-session", Force: true}
 
 	// act
-	result, output, err := server.handleRemoveWorktree(ctx, nil, removeArgs)
+	result, output, err := server.handleRemoveSession(ctx, nil, removeArgs)
 
 	// assert
 	if err != nil {
@@ -373,9 +373,9 @@ func TestRemoveWorktreeToolHandler_ForceRemoveWithChanges_ReturnsSuccess(t *test
 		t.Error("expected IsError to be false")
 	}
 
-	response, ok := output.(RemoveWorktreeOutput)
+	response, ok := output.(RemoveSessionOutput)
 	if !ok {
-		t.Fatalf("expected output to be RemoveWorktreeOutput, got: %T", output)
+		t.Fatalf("expected output to be RemoveSessionOutput, got: %T", output)
 	}
 	if response.HasUnmergedChanges {
 		t.Error("expected HasUnmergedChanges to be false when force=true")
@@ -389,7 +389,7 @@ func TestRemoveWorktreeToolHandler_ForceRemoveWithChanges_ReturnsSuccess(t *test
 	}
 }
 
-func TestRemoveWorktreeToolHandler_InvalidSessionID_ReturnsError(t *testing.T) {
+func TestRemoveSessionToolHandler_InvalidSessionID_ReturnsError(t *testing.T) {
 	// arrange
 	repositoryRoot, cleanup := setupTestRepo(t)
 	defer cleanup()
@@ -397,18 +397,18 @@ func TestRemoveWorktreeToolHandler_InvalidSessionID_ReturnsError(t *testing.T) {
 	gitClient := git.NewGitClient(repositoryRoot)
 	sessionRepository := persistence.NewInMemorySessionRepository()
 	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, sessionRepository, repositoryRoot)
-	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, sessionRepository, "master")
+	removeSessionUseCase := application.NewRemoveSessionUseCase(gitClient, sessionRepository, "master")
 
-	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	server, err := NewMCPServer(createWorktreeUseCase, removeSessionUseCase)
 	if err != nil {
 		t.Fatalf("failed to create MCP server: %v", err)
 	}
 
 	ctx := context.Background()
-	args := RemoveWorktreeArgs{SessionID: "invalid session id", Force: false}
+	args := RemoveSessionArgs{SessionID: "invalid session id", Force: false}
 
 	// act
-	result, _, err := server.handleRemoveWorktree(ctx, nil, args)
+	result, _, err := server.handleRemoveSession(ctx, nil, args)
 
 	// assert
 	if err == nil {
@@ -419,7 +419,7 @@ func TestRemoveWorktreeToolHandler_InvalidSessionID_ReturnsError(t *testing.T) {
 	}
 }
 
-func TestRemoveWorktreeToolHandler_NonexistentSession_ReturnsError(t *testing.T) {
+func TestRemoveSessionToolHandler_NonexistentSession_ReturnsError(t *testing.T) {
 	// arrange
 	repositoryRoot, cleanup := setupTestRepo(t)
 	defer cleanup()
@@ -427,18 +427,18 @@ func TestRemoveWorktreeToolHandler_NonexistentSession_ReturnsError(t *testing.T)
 	gitClient := git.NewGitClient(repositoryRoot)
 	sessionRepository := persistence.NewInMemorySessionRepository()
 	createWorktreeUseCase := application.NewCreateWorktreeUseCase(gitClient, sessionRepository, repositoryRoot)
-	removeWorktreeUseCase := application.NewRemoveWorktreeUseCase(gitClient, sessionRepository, "master")
+	removeSessionUseCase := application.NewRemoveSessionUseCase(gitClient, sessionRepository, "master")
 
-	server, err := NewMCPServer(createWorktreeUseCase, removeWorktreeUseCase)
+	server, err := NewMCPServer(createWorktreeUseCase, removeSessionUseCase)
 	if err != nil {
 		t.Fatalf("failed to create MCP server: %v", err)
 	}
 
 	ctx := context.Background()
-	args := RemoveWorktreeArgs{SessionID: "nonexistent", Force: false}
+	args := RemoveSessionArgs{SessionID: "nonexistent", Force: false}
 
 	// act
-	result, _, err := server.handleRemoveWorktree(ctx, nil, args)
+	result, _, err := server.handleRemoveSession(ctx, nil, args)
 
 	// assert
 	if err == nil {

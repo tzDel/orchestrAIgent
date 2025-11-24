@@ -19,12 +19,12 @@ type CreateWorktreeOutput struct {
 	Status       string `json:"status"`
 }
 
-type RemoveWorktreeArgs struct {
+type RemoveSessionArgs struct {
 	SessionID string `json:"sessionId" jsonschema:"required" jsonschema_description:"Session identifier"`
 	Force     bool   `json:"force" jsonschema_description:"Skip safety checks and force removal"`
 }
 
-type RemoveWorktreeOutput struct {
+type RemoveSessionOutput struct {
 	SessionID          string `json:"sessionId"`
 	RemovedAt          string `json:"removedAt,omitempty"`
 	HasUnmergedChanges bool   `json:"hasUnmergedChanges"`
@@ -36,12 +36,12 @@ type RemoveWorktreeOutput struct {
 type MCPServer struct {
 	mcpServer             *mcpsdk.Server
 	createWorktreeUseCase *application.CreateWorktreeUseCase
-	removeWorktreeUseCase *application.RemoveWorktreeUseCase
+	removeSessionUseCase  *application.RemoveSessionUseCase
 }
 
 func NewMCPServer(
 	createWorktreeUseCase *application.CreateWorktreeUseCase,
-	removeWorktreeUseCase *application.RemoveWorktreeUseCase,
+	removeSessionUseCase *application.RemoveSessionUseCase,
 ) (*MCPServer, error) {
 	impl := &mcpsdk.Implementation{
 		Name:    "orchestrAIgent",
@@ -53,7 +53,7 @@ func NewMCPServer(
 	server := &MCPServer{
 		mcpServer:             mcpServer,
 		createWorktreeUseCase: createWorktreeUseCase,
-		removeWorktreeUseCase: removeWorktreeUseCase,
+		removeSessionUseCase:  removeSessionUseCase,
 	}
 
 	mcpsdk.AddTool(
@@ -68,10 +68,10 @@ func NewMCPServer(
 	mcpsdk.AddTool(
 		mcpServer,
 		&mcpsdk.Tool{
-			Name:        "remove_worktree",
+			Name:        "remove_session",
 			Description: "Removes an session's worktree and branch. Checks for unmerged changes unless force=true.",
 		},
-		server.handleRemoveWorktree,
+		server.handleRemoveSession,
 	)
 
 	return server, nil
@@ -103,23 +103,23 @@ func (s *MCPServer) handleCreateWorktree(
 	return newSuccessResult(message), output, nil
 }
 
-func (s *MCPServer) handleRemoveWorktree(
+func (s *MCPServer) handleRemoveSession(
 	ctx context.Context,
 	req *mcpsdk.CallToolRequest,
-	args RemoveWorktreeArgs,
+	args RemoveSessionArgs,
 ) (*mcpsdk.CallToolResult, any, error) {
-	request := application.RemoveWorktreeRequest{
+	request := application.RemoveSessionRequest{
 		SessionID: args.SessionID,
 		Force:     args.Force,
 	}
 
-	response, err := s.removeWorktreeUseCase.Execute(ctx, request)
+	response, err := s.removeSessionUseCase.Execute(ctx, request)
 	if err != nil {
 		message := fmt.Sprintf("Failed to remove worktree: %v", err)
 		return newErrorResult(message), nil, err
 	}
 
-	output := RemoveWorktreeOutput{
+	output := RemoveSessionOutput{
 		SessionID:          response.SessionID,
 		HasUnmergedChanges: response.HasUnmergedChanges,
 		UnmergedCommits:    response.UnmergedCommits,

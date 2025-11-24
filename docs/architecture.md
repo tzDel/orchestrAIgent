@@ -66,8 +66,8 @@ graph TB
 1. MCP client calls `create_worktree(sessionId)` → Server creates worktree + branch
 2. Agent works in isolated worktree
 3. Developer reviews manually: `cd .worktrees/agent-{sessionId} && git diff`
-4. Developer merges manually or via `merge_to_main(sessionId)`
-5. Cleanup with `remove_worktree(sessionId)`
+4. Developer merges manually
+5. Cleanup with `remove_session(sessionId)`
 
 **Future (Orchestration):**
 1. CLI/IDE calls `spawn_agent()` → Server creates worktree + spawns agent process

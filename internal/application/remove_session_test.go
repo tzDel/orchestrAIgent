@@ -8,16 +8,16 @@ import (
 	"github.com/tzDel/orchestrAIgent/internal/domain"
 )
 
-func TestRemoveWorktreeUseCase_Execute_SessionNotFound(t *testing.T) {
+func TestRemoveSessionUseCase_Execute_SessionNotFound(t *testing.T) {
 	// arrange
 	gitOperations := &mockGitOperations{}
 	sessionRepository := newMockSessionRepository()
-	removeWorktreeUseCase := NewRemoveWorktreeUseCase(gitOperations, sessionRepository, "main")
-	request := RemoveWorktreeRequest{SessionID: "nonexistent", Force: false}
+	removeSessionUseCase := NewRemoveSessionUseCase(gitOperations, sessionRepository, "main")
+	request := RemoveSessionRequest{SessionID: "nonexistent", Force: false}
 	ctx := context.Background()
 
 	// act
-	_, err := removeWorktreeUseCase.Execute(ctx, request)
+	_, err := removeSessionUseCase.Execute(ctx, request)
 
 	// assert
 	if err == nil {
@@ -25,22 +25,22 @@ func TestRemoveWorktreeUseCase_Execute_SessionNotFound(t *testing.T) {
 	}
 }
 
-func TestRemoveWorktreeUseCase_Execute_SessionAlreadyRemoved(t *testing.T) {
+func TestRemoveSessionUseCase_Execute_SessionAlreadyRemoved(t *testing.T) {
 	// arrange
 	gitOperations := &mockGitOperations{}
 	sessionRepository := newMockSessionRepository()
-	removeWorktreeUseCase := NewRemoveWorktreeUseCase(gitOperations, sessionRepository, "main")
+	removeSessionUseCase := NewRemoveSessionUseCase(gitOperations, sessionRepository, "main")
 
 	sessionID, _ := domain.NewSessionID("test-session")
 	session, _ := domain.NewSession(sessionID, "/path")
 	session.MarkRemoved()
 	sessionRepository.Save(context.Background(), session)
 
-	request := RemoveWorktreeRequest{SessionID: "test-session", Force: false}
+	request := RemoveSessionRequest{SessionID: "test-session", Force: false}
 	ctx := context.Background()
 
 	// act
-	_, err := removeWorktreeUseCase.Execute(ctx, request)
+	_, err := removeSessionUseCase.Execute(ctx, request)
 
 	// assert
 	if err == nil {
@@ -48,7 +48,7 @@ func TestRemoveWorktreeUseCase_Execute_SessionAlreadyRemoved(t *testing.T) {
 	}
 }
 
-func TestRemoveWorktreeUseCase_Execute_UncommittedChangesWithoutForce(t *testing.T) {
+func TestRemoveSessionUseCase_Execute_UncommittedChangesWithoutForce(t *testing.T) {
 	// arrange
 	gitOperations := &mockGitOperations{
 		hasUncommittedChangesFunc: func(ctx context.Context, worktreePath string) (bool, int, error) {
@@ -59,17 +59,17 @@ func TestRemoveWorktreeUseCase_Execute_UncommittedChangesWithoutForce(t *testing
 		},
 	}
 	sessionRepository := newMockSessionRepository()
-	removeWorktreeUseCase := NewRemoveWorktreeUseCase(gitOperations, sessionRepository, "main")
+	removeSessionUseCase := NewRemoveSessionUseCase(gitOperations, sessionRepository, "main")
 
 	sessionID, _ := domain.NewSessionID("test-session")
 	session, _ := domain.NewSession(sessionID, "/path")
 	sessionRepository.Save(context.Background(), session)
 
-	request := RemoveWorktreeRequest{SessionID: "test-session", Force: false}
+	request := RemoveSessionRequest{SessionID: "test-session", Force: false}
 	ctx := context.Background()
 
 	// act
-	response, err := removeWorktreeUseCase.Execute(ctx, request)
+	response, err := removeSessionUseCase.Execute(ctx, request)
 
 	// assert
 	if err != nil {
@@ -89,7 +89,7 @@ func TestRemoveWorktreeUseCase_Execute_UncommittedChangesWithoutForce(t *testing
 	}
 }
 
-func TestRemoveWorktreeUseCase_Execute_UnpushedCommitsWithoutForce(t *testing.T) {
+func TestRemoveSessionUseCase_Execute_UnpushedCommitsWithoutForce(t *testing.T) {
 	// arrange
 	gitOperations := &mockGitOperations{
 		hasUncommittedChangesFunc: func(ctx context.Context, worktreePath string) (bool, int, error) {
@@ -100,17 +100,17 @@ func TestRemoveWorktreeUseCase_Execute_UnpushedCommitsWithoutForce(t *testing.T)
 		},
 	}
 	sessionRepository := newMockSessionRepository()
-	removeWorktreeUseCase := NewRemoveWorktreeUseCase(gitOperations, sessionRepository, "main")
+	removeSessionUseCase := NewRemoveSessionUseCase(gitOperations, sessionRepository, "main")
 
 	sessionID, _ := domain.NewSessionID("test-session")
 	session, _ := domain.NewSession(sessionID, "/path")
 	sessionRepository.Save(context.Background(), session)
 
-	request := RemoveWorktreeRequest{SessionID: "test-session", Force: false}
+	request := RemoveSessionRequest{SessionID: "test-session", Force: false}
 	ctx := context.Background()
 
 	// act
-	response, err := removeWorktreeUseCase.Execute(ctx, request)
+	response, err := removeSessionUseCase.Execute(ctx, request)
 
 	// assert
 	if err != nil {
@@ -127,7 +127,7 @@ func TestRemoveWorktreeUseCase_Execute_UnpushedCommitsWithoutForce(t *testing.T)
 	}
 }
 
-func TestRemoveWorktreeUseCase_Execute_CleanWorktree(t *testing.T) {
+func TestRemoveSessionUseCase_Execute_CleanWorktree(t *testing.T) {
 	// arrange
 	gitOperations := &mockGitOperations{
 		hasUncommittedChangesFunc: func(ctx context.Context, worktreePath string) (bool, int, error) {
@@ -138,17 +138,17 @@ func TestRemoveWorktreeUseCase_Execute_CleanWorktree(t *testing.T) {
 		},
 	}
 	sessionRepository := newMockSessionRepository()
-	removeWorktreeUseCase := NewRemoveWorktreeUseCase(gitOperations, sessionRepository, "main")
+	removeSessionUseCase := NewRemoveSessionUseCase(gitOperations, sessionRepository, "main")
 
 	sessionID, _ := domain.NewSessionID("test-session")
 	session, _ := domain.NewSession(sessionID, "/path")
 	sessionRepository.Save(context.Background(), session)
 
-	request := RemoveWorktreeRequest{SessionID: "test-session", Force: false}
+	request := RemoveSessionRequest{SessionID: "test-session", Force: false}
 	ctx := context.Background()
 
 	// act
-	response, err := removeWorktreeUseCase.Execute(ctx, request)
+	response, err := removeSessionUseCase.Execute(ctx, request)
 
 	// assert
 	if err != nil {
@@ -167,7 +167,7 @@ func TestRemoveWorktreeUseCase_Execute_CleanWorktree(t *testing.T) {
 	}
 }
 
-func TestRemoveWorktreeUseCase_Execute_ForceRemoveWithChanges(t *testing.T) {
+func TestRemoveSessionUseCase_Execute_ForceRemoveWithChanges(t *testing.T) {
 	// arrange
 	gitOperations := &mockGitOperations{
 		hasUncommittedChangesFunc: func(ctx context.Context, worktreePath string) (bool, int, error) {
@@ -178,17 +178,17 @@ func TestRemoveWorktreeUseCase_Execute_ForceRemoveWithChanges(t *testing.T) {
 		},
 	}
 	sessionRepository := newMockSessionRepository()
-	removeWorktreeUseCase := NewRemoveWorktreeUseCase(gitOperations, sessionRepository, "main")
+	removeSessionUseCase := NewRemoveSessionUseCase(gitOperations, sessionRepository, "main")
 
 	sessionID, _ := domain.NewSessionID("test-session")
 	session, _ := domain.NewSession(sessionID, "/path")
 	sessionRepository.Save(context.Background(), session)
 
-	request := RemoveWorktreeRequest{SessionID: "test-session", Force: true}
+	request := RemoveSessionRequest{SessionID: "test-session", Force: true}
 	ctx := context.Background()
 
 	// act
-	response, err := removeWorktreeUseCase.Execute(ctx, request)
+	response, err := removeSessionUseCase.Execute(ctx, request)
 
 	// assert
 	if err != nil {
@@ -207,16 +207,16 @@ func TestRemoveWorktreeUseCase_Execute_ForceRemoveWithChanges(t *testing.T) {
 	}
 }
 
-func TestRemoveWorktreeUseCase_Execute_InvalidSessionID(t *testing.T) {
+func TestRemoveSessionUseCase_Execute_InvalidSessionID(t *testing.T) {
 	// arrange
 	gitOperations := &mockGitOperations{}
 	sessionRepository := newMockSessionRepository()
-	removeWorktreeUseCase := NewRemoveWorktreeUseCase(gitOperations, sessionRepository, "main")
-	request := RemoveWorktreeRequest{SessionID: "Invalid_ID", Force: false}
+	removeSessionUseCase := NewRemoveSessionUseCase(gitOperations, sessionRepository, "main")
+	request := RemoveSessionRequest{SessionID: "Invalid_ID", Force: false}
 	ctx := context.Background()
 
 	// act
-	_, err := removeWorktreeUseCase.Execute(ctx, request)
+	_, err := removeSessionUseCase.Execute(ctx, request)
 
 	// assert
 	if err == nil {
@@ -224,7 +224,7 @@ func TestRemoveWorktreeUseCase_Execute_InvalidSessionID(t *testing.T) {
 	}
 }
 
-func TestRemoveWorktreeUseCase_Execute_GitOperationFails(t *testing.T) {
+func TestRemoveSessionUseCase_Execute_GitOperationFails(t *testing.T) {
 	// arrange
 	gitOperations := &mockGitOperations{
 		hasUncommittedChangesFunc: func(ctx context.Context, worktreePath string) (bool, int, error) {
@@ -238,17 +238,17 @@ func TestRemoveWorktreeUseCase_Execute_GitOperationFails(t *testing.T) {
 		},
 	}
 	sessionRepository := newMockSessionRepository()
-	removeWorktreeUseCase := NewRemoveWorktreeUseCase(gitOperations, sessionRepository, "main")
+	removeSessionUseCase := NewRemoveSessionUseCase(gitOperations, sessionRepository, "main")
 
 	sessionID, _ := domain.NewSessionID("test-session")
 	session, _ := domain.NewSession(sessionID, "/path")
 	sessionRepository.Save(context.Background(), session)
 
-	request := RemoveWorktreeRequest{SessionID: "test-session", Force: false}
+	request := RemoveSessionRequest{SessionID: "test-session", Force: false}
 	ctx := context.Background()
 
 	// act
-	_, err := removeWorktreeUseCase.Execute(ctx, request)
+	_, err := removeSessionUseCase.Execute(ctx, request)
 
 	// assert
 	if err == nil {
@@ -256,7 +256,7 @@ func TestRemoveWorktreeUseCase_Execute_GitOperationFails(t *testing.T) {
 	}
 }
 
-func TestRemoveWorktreeUseCase_Execute_BranchDeleteFailsContinues(t *testing.T) {
+func TestRemoveSessionUseCase_Execute_BranchDeleteFailsContinues(t *testing.T) {
 	// arrange
 	gitOperations := &mockGitOperations{
 		hasUncommittedChangesFunc: func(ctx context.Context, worktreePath string) (bool, int, error) {
@@ -270,17 +270,17 @@ func TestRemoveWorktreeUseCase_Execute_BranchDeleteFailsContinues(t *testing.T) 
 		},
 	}
 	sessionRepository := newMockSessionRepository()
-	removeWorktreeUseCase := NewRemoveWorktreeUseCase(gitOperations, sessionRepository, "main")
+	removeSessionUseCase := NewRemoveSessionUseCase(gitOperations, sessionRepository, "main")
 
 	sessionID, _ := domain.NewSessionID("test-session")
 	session, _ := domain.NewSession(sessionID, "/path")
 	sessionRepository.Save(context.Background(), session)
 
-	request := RemoveWorktreeRequest{SessionID: "test-session", Force: false}
+	request := RemoveSessionRequest{SessionID: "test-session", Force: false}
 	ctx := context.Background()
 
 	// act
-	response, err := removeWorktreeUseCase.Execute(ctx, request)
+	response, err := removeSessionUseCase.Execute(ctx, request)
 
 	// assert
 	if err != nil {

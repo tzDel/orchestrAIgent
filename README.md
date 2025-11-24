@@ -17,9 +17,9 @@ See [docs/architecture.md](docs/architecture.md) for detailed architecture docum
   Example: "Create a worktree for session abc123"
   ```
 
-- **Cleanup Worktree**: Remove agent worktree and branch
+- **Remove Session**: Remove agent worktree and branch
   ```
-  Example: "Remove the worktree for session abc123"
+  Example: "Remove session abc123"
   ```
 
 - **Get Session Info**: Retrieve agent status, worktree path, and branch information
